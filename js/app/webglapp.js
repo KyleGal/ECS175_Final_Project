@@ -6,6 +6,7 @@ import Input from '../input/input.js'
 import * as mat4 from '../lib/glmatrix/mat4.js'
 import * as vec3 from '../lib/glmatrix/vec3.js'
 import * as quat from '../lib/glmatrix/quat.js'
+import ProcGeneration from '../../fp_procedural_generation.js'
 
 import { OBJLoader } from '../../assignment3.objloader.js'
 import { Scene, SceneNode } from './scene.js'
@@ -39,6 +40,10 @@ class WebGlApp
         // Create a box instance and create a variable to track its rotation
         this.box = new Box( gl, this.box_shader )
         this.animation_step = 0
+
+        // Create a procedural generation instance for terrain
+        let seed = 42;
+        this.proc_gen = new ProcGeneration(seed);
 
         // Declare a variable to hold a Scene
         // Scene files can be loaded through the UI (see below)
@@ -180,6 +185,22 @@ class WebGlApp
                 this.updateSceneNode( scene_node, delta_time )
                 break
         }
+
+        // Procedural Geneartion
+        let old_seed = -100;
+        let new_seed = app_state.getState('Procedural Generation');
+        if (new_seed != old_seed) {
+            // console.log(new_seed);
+            // console.log(old_seed);
+            if (this.scene != null) {
+                this.proc_gen.seed = new_seed;
+                const procMap = this.proc_gen.mapGeneration();
+                this.scene.generateGridObjects(procMap, gl, this.shaders[this.active_shader]);
+            }
+            old_seed = new_seed;
+        }
+        
+        
     }
 
     /**

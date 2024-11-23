@@ -36,7 +36,7 @@ class AppState
         // create state dictionary
         this.ui_state = {
             'Shading': '',
-            'Procedural Generation': '',
+            'Procedural Generation': '0',
             'Particle Systems': '',
             'Control': '',
             'Select Scene Node': ''
@@ -115,6 +115,11 @@ class AppState
             this.updateUI( 'Control', 'Scene Node')
         } else {
             this.updateUI( 'Control', 'Camera')
+        }
+
+        // Procedural Generation
+        if ( Input.isKeyPressed( '13' )) { // 'Enter' key
+            this.updateUI( 'Procedural Generation', document.getElementById( 'seedInput' ))
         }
 
     }

@@ -258,6 +258,52 @@ class Scene {
     render( gl ) {
         this.scenegraph.render( gl )
     }
+
+
+
+    /** 
+     * Generate grid objects determiend by procedural generation
+     * 
+     */
+    generateGridObjects(procMap, gl, shader) {
+        for (let y = 0; y < procMap.length; y++) {
+            for (let x = 0; x < procMap[y].length; x++) {
+                let modelType = procMap[y][x];
+                if (!modelType) continue; // Skip null (middle lane)
+
+                // normalize x and y to properly place on grid of [-1, 1]
+                const grid_size = 3;
+                const normalX = (x / (grid_size - 1)) * 2 - 1;
+                const normalY = (y / (grid_size - 1)) * 2 - 1;
+
+                // TODO: map object to grid based on y, x
+                let translation; // [x - 25, 0, y - 25]
+                if (modelType == 'grass') {
+                    translation = [normalX, -1.25, normalY];
+                } else if (modelType == 'rock') {
+                    translation = [normalX, -0.8, normalY];
+                } else if (modelType == 'tree') {
+                    translation = [normalX, -0.70, normalY];
+                } else {
+                    console.log("Not supposed to procedurally generate this model!!");
+                }
+    
+                // Instantiate model node
+                // let modelNode = new ModelNode(
+                //     this.instantiateModel(modelType, gl, shader), 
+                //     `${modelType}_${x}_${y}`, 
+                //     'model', 
+                //     mat4.fromTranslation(mat4.create(), translation) // Place translation from grid to scene
+                // );
+    
+                // // Add node to the scenegraph
+                // this.scenegraph.addChild(modelNode);
+            }
+        }
+    }
+
+
+
 }
 
 /**

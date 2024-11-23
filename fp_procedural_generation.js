@@ -1,12 +1,17 @@
+import * as THREE from "./js/lib/glmatrix/three.js"
+
 class ProcGeneration {
 
-    constructor() {
+    constructor(seed=0) {
+        this.height = 3;
+        this.width = 3;
+        this.seed = seed;
+        console.log("SEED:", seed);
+
         // Initialize the permutation table and gradient vectors
         this.perm = [];
         this.grad3 = [
-            [1, 1, 0], [ -1, 1, 0], [ 1, -1, 0], [ -1, -1, 0],
-            [ 1, 0, 1], [ -1, 0, 1], [ 1, 0, -1], [ -1, 0, -1],
-            [ 0, 1, 1], [ 0, -1, 1], [ 0, 1, -1], [ 0, -1, -1]
+            [1, 1, 0], [ -1, 1, 0], [ 1, -1, 0], [ -1, -1, 0]
         ];
         
         // Generate and duplicate the permutation table
@@ -16,64 +21,68 @@ class ProcGeneration {
         this.perm = this.perm.concat(this.perm);  // Duplicate the permutation array
     }
 
-    // Dot product function for 3D vectors
-    dot(g, x, y, z) {
-        return g[0] * x + g[1] * y + g[2] * z;
-    }
-
-    // Fade function to smooth transitions
-    fade(t) {
-        return t * t * t * (t * (t * 6 - 15) + 10);
-    }
-
-    // Lerp (Linear interpolation) function
-    lerp(t, a, b) {
-        return a + t * (b - a);
-    }
-
-    // Grad function returns a smooth gradient vector at the point (x, y, z)
-    grad(hash, x, y, z) {
-        let h = hash & 15;
-        let u = h < 8 ? x : y;
-        let v = h < 4 ? y : h === 12 || h === 14 ? x : z;
-        return ((h & 1 ? -1 : 1) * u + (h & 2 ? -1 : 1) * v);
-    }
 
     // Perlin Noise function
-    perlin(x, y, z) {
-        let X = Math.floor(x) & 255;
-        let Y = Math.floor(y) & 255;
-        let Z = Math.floor(z) & 255;
-    
+    perlinNoise(x, y) {
+        // Grid cell coordinates
+        const X = Math.floor(x) & 255;
+        const Y = Math.floor(y) & 255;
+
+        // Relative position within the cell
         x -= Math.floor(x);
         y -= Math.floor(y);
-        z -= Math.floor(z);
-    
-        let u = this.fade(x);
-        let v = this.fade(y);
-        let w = this.fade(z);
-    
-        let A = this.perm[X] + Y;
-        let AA = this.perm[A] + Z;
-        let AB = this.perm[A + 1] + Z;
-        let B = this.perm[X + 1] + Y;
-        let BA = this.perm[B] + Z;
-        let BB = this.perm[B + 1] + Z;
-    
-        return this.lerp(w,
-            this.lerp(v,
-                this.lerp(u, this.dot(this.grad(this.perm[AA], x, y, z), x, y, z),
-                        this.dot(this.grad(this.perm[BA], x - 1, y, z), x - 1, y, z)),
-                this.lerp(u, this.dot(this.grad(this.perm[AB], x, y - 1, z), x, y - 1, z),
-                        this.dot(this.grad(this.perm[BB], x - 1, y - 1, z), x - 1, y - 1, z))
+
+        // Fade curves
+        const u = THREE.fade(x);
+        const v = THREE.fade(y);
+
+        // Hash coordinates of the square's corners
+        const A = this.perm[X] + Y;
+        const B = this.perm[X + 1] + Y;
+
+        // Interpolate between corners
+        return THREE.lerp(v,
+            THREE.lerp(u,
+                THREE.grad(this.perm[A], x, y),
+                THREE.grad(this.perm[B], x - 1, y)
             ),
-            this.lerp(v,
-                this.lerp(u, this.dot(this.grad(this.perm[AA + 1], x, y, z - 1), x, y, z - 1),
-                        this.dot(this.grad(this.perm[BA + 1], x - 1, y, z - 1), x - 1, y, z - 1)),
-                this.lerp(u, this.dot(this.grad(this.perm[AB + 1], x, y - 1, z - 1), x, y - 1, z - 1),
-                        this.dot(this.grad(this.perm[BB + 1], x - 1, y - 1, z - 1), x - 1, y - 1, z - 1))
+            THREE.lerp(u,
+                THREE.grad(this.perm[A + 1], x, y - 1),
+                THREE.grad(this.perm[B + 1], x - 1, y - 1)
             )
         );
+    }
+
+    // create map for terrain generation
+    // value is a 50x50 matrix
+    mapGeneration() {
+
+        let value = [];   
+        for (let y = 0; y < this.height; y++) {
+            value[y] = [];
+            for (let x = 0; x < this.width; x++) {      
+                // skip middle lane
+                if (y >= 20 && y <= 30) {
+                    value[y][x] = null;
+                    continue;
+                }
+
+                let nx = (x + this.seed)/this.width - 0.5, ny = (y + this.seed)/this.height - 0.5; // offset coordinates with seed
+                let noise_result = THREE.normalize(this.perlinNoise(nx, ny));
+
+                // determine model type
+                let model_type;
+                if (noise_result < 0.5) model_type = 'grass';
+                else if (noise_result < 0.9) model_type = 'rock';
+                else if (noise_result <= 1.0) model_type = 'tree';
+                else console.log("Incorrect noise_result: ", noise_result);
+
+                value[y][x] = model_type;
+
+            }
+        }
+
+        return value;
     }
 }
 

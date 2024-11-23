@@ -46,11 +46,13 @@ class OBJLoader {
         let material = new Material([0.2,0.2,0.2], [0.5,0.5,0.5], [0.3,0.3,0.3], 20.0)
 
         // Parse the file line-by-line
+        let mtlfile_name = ''
         for (let line of contents.split('\n')){
             let token = line.split(' ')[0]
             switch(token) {
                 case 'mtllib':
                     let file = line.split(' ')[1]
+                    mtlfile_name = file;
                     let filepath = getFileDir(this.filename)
                     let loader = new MTLLoader(`${filepath}/${file}`)
                     materials = loader.load( gl )
@@ -75,6 +77,16 @@ class OBJLoader {
                     texture_coord_indices.push(...this.parseFace(line, 1))
                     normal_indices.push(...this.parseFace(line, 2))
                     break
+            }
+        }
+
+        // if we are loading in rock, we need to flip the normals
+        if (mtlfile_name == 'rock.mtl') {
+            console.log("WE FLIPPED NORMALS FOR ROCK");
+            for (let i = 0; i < vertex_normals.length; i += 3) {
+                // Flip the Y and Z components
+                vertex_normals[i + 1] = -vertex_normals[i + 1]; // Flip Ny
+                vertex_normals[i + 2] = -vertex_normals[i + 2]; // Flip Nz
             }
         }
 

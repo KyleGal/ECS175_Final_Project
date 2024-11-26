@@ -26,20 +26,20 @@
         {
             "name": "ambient1",
             "type": "ambient",
-            "color": "#FFD6A5",
+            "color": "#F5A340",
             "intensity": 0.1
         },
         {
             "name": "directional1",
             "type": "directional",
-            "color": "#FFF5CC",
-            "intensity": 2.0
+            "color": "#F5A340",
+            "intensity": 1.5
         },
         {
             "name": "point1",
             "type": "point",
             "color": "#F5A340",
-            "intensity": 1.0
+            "intensity": 0.8
         }
     ],
     "scenegraph": {

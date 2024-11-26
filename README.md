@@ -1,4 +1,4 @@
-# ECS 175 - Assignment 3
+# ECS 175 - Final Project
 
 *Instructions:* [https://canvas.ucdavis.edu/courses/912181/assignments/1267411](https://canvas.ucdavis.edu/courses/912181/assignments/1267411)
 

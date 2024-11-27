@@ -1,22 +1,15 @@
-# Blender 4.3.0 MTL File: 'None'
-# www.blender.org
-
+# MTL written from D:\Cloud\Projects\Personal\Turbosquid\Lowpoly_Trees\Publish_Sample\Lowpoly_tree_sample.obj
 newmtl Bark
-Ns 256.000031
-Ka 1.000000 1.000000 1.000000
-Kd 0.400000 0.200000 0.100000
-Ks 0.000000 0.000000 0.000000
-Ke 0.000000 0.000000 0.000000
-Ni 1.500000
-d 1.000000
+Kd 0.207595 0.138513 0.055181
+Ns 256
+d 1
 illum 1
-
+Ka 0 0 0
+Ks 0 0 0
 newmtl Tree
-Ns 256.000031
-Ka 1.000000 1.000000 1.000000
 Kd 0.256861 0.440506 0.110769
-Ks 0.000000 0.000000 0.000000
-Ke 0.000000 0.000000 0.000000
-Ni 1.500000
-d 1.000000
+Ns 256
+d 1
 illum 1
+Ka 0 0 0
+Ks 0 0 0

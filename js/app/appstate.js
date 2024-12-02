@@ -17,9 +17,7 @@ class AppState
             // 'Shading Debug': {
             //     'Normals': document.getElementById( 'shadingDebugNormals' ),
             // },
-            'Procedural Generation': {
-                'Seed': document.getElementById( 'seedInput' ),
-            },
+            'Procedural Generation': document.getElementById( 'seedInput' ),
             'Particle Systems': {
                 'Wind': document.getElementById( 'windInput' ),
                 'Gravity': document.getElementById( 'gravityInput' )
@@ -36,7 +34,7 @@ class AppState
         // create state dictionary
         this.ui_state = {
             'Shading': '',
-            'Procedural Generation': '0',
+            'Procedural Generation': '',
             'Particle Systems': '',
             'Control': '',
             'Select Scene Node': ''
@@ -45,9 +43,9 @@ class AppState
         // Update UI with default values
         this.updateUI( 'Shading', 'Textured' )
         // this.updateUI( 'Shading Debug', '' )
-        this.updateUI( 'Procedural Generation', '' )
         this.updateUI( 'Particle Systems', '' )
         this.updateUI( 'Control', 'Camera' )
+        this.ui_state['Procedural Generation'] = 0
         
         // Set asynchronous handlers
         this.ui_categories['Select Scene Node'].onchange = () => {
@@ -69,6 +67,9 @@ class AppState
             this.ui_categories['Select Scene Node'].removeAttribute('disabled')
             this.ui_categories['Select Scene Node'].value = this.ui_categories['Select Scene Node'].getElementsByTagName('option')[0].value
             this.ui_state['Select Scene Node'] = this.ui_categories['Select Scene Node'].value
+        }
+        this.ui_categories['Procedural Generation'].onchange = (evt) => {
+            this.ui_state['Procedural Generation'] = evt.target.value
         }
     }
 
@@ -118,9 +119,9 @@ class AppState
         }
 
         // Procedural Generation
-        if ( Input.isKeyPressed( '13' )) { // 'Enter' key
-            this.updateUI( 'Procedural Generation', document.getElementById( 'seedInput' ))
-        }
+        // if ( Input.isKeyPressed( '13' )) { // 'Enter' key
+        //     this.updateUI( 'Procedural Generation', document.getElementById( 'seedInput' ))
+        // }
 
     }
 

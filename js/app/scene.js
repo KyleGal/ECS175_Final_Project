@@ -3,6 +3,7 @@
 import { ShadedObject3D } from "../../assignment3.object3d.js"
 import { SHADER_MAX_LIGHTS, hex2rgb, json2transform } from "../utils/utils.js"
 import * as mat4 from "../lib/glmatrix/mat4.js"
+import * as vec3 from '../lib/glmatrix/vec3.js'
 import * as quat4 from "../lib/glmatrix/quat.js"
 
 import { OBJLoader } from "../../assignment3.objloader.js"
@@ -259,50 +260,98 @@ class Scene {
         this.scenegraph.render( gl )
     }
 
-
-
     /** 
      * Generate grid objects determiend by procedural generation
      * 
      */
     generateGridObjects(procMap, gl, shader) {
+        // delete current grass, rock, and tree objects
+        let platform_node = this.getNode( "platform_node" );
+        let platform_children = platform_node.getNodes;
+        for (let i = 1; i < platform_children.length; i++) {
+            delete platform_children[i];
+        }
+        platform_node.children = [];
+
+        // render new objects based on procedural generated map
+        let grass_count, rock_count, tree_count = 0
+        let rotation = quat4.create(), translation = vec3.create(), scale = [1,1,1];
         for (let y = 0; y < procMap.length; y++) {
             for (let x = 0; x < procMap[y].length; x++) {
                 let modelType = procMap[y][x];
                 if (!modelType) continue; // Skip null (middle lane)
 
                 // normalize x and y to properly place on grid of [-1, 1]
-                const grid_size = 3;
-                const normalX = (x / (grid_size - 1)) * 2 - 1;
-                const normalY = (y / (grid_size - 1)) * 2 - 1;
+                const grid_size = procMap.length;
+                let normalX = ((2*x) / grid_size) - 1; // (x - xMIN) / (xMAX - xMIN)
+                let normalY = ((2*y) / grid_size) - 1;
 
-                // TODO: map object to grid based on y, x
-                let translation; // [x - 25, 0, y - 25]
-                if (modelType == 'grass') {
-                    translation = [normalX, -1.25, normalY];
-                } else if (modelType == 'rock') {
-                    translation = [normalX, -0.8, normalY];
-                } else if (modelType == 'tree') {
-                    translation = [normalX, -0.70, normalY];
-                } else {
-                    console.log("Not supposed to procedurally generate this model!!");
+                console.log("Pre-Mapping: (", x, ", ", y, ")");
+                console.log("Grid Placement: (", normalX, ", ", normalY, ")");
+
+
+                // map object to grid in scene based on x,y
+                let model_name;
+                let random_scale = Math.random() * (0.5 - 0.1) + 0.1;
+                switch(modelType) {
+                    case 'grass':
+                        // move x and y a little bit so that objects are not uniform in placement
+                        normalX = normalX + (Math.random() * (0.2 - 0))
+                        normalY = normalY + (Math.random() * (0.2 - 0))
+
+                        // ensure normalX and normalY do not go beyond 1
+                        if (normalX > 1.0) normalX = 0.9 + (Math.random() * (0.2 - 0));
+                        if (normalY > 1.0) normalY = 0.9 + (Math.random() * (0.2 - 0));
+                        
+                        // change y translation depending on scale
+                        scale = [random_scale, random_scale, random_scale];
+                        if (random_scale < 0.2) translation = [normalY, -0.10, normalX];
+                        else if (random_scale < 0.3) translation = [normalY, -0.15, normalX];
+                        else if (random_scale < 0.4) translation = [normalY, -0.20, normalX];
+                        else if (random_scale < 0.5) translation = [normalY, -0.25, normalX];
+                        grass_count++;
+                        model_name = `${modelType}${grass_count}`;
+                        break;
+                    case 'rock':
+                        // change y translation depending on scale
+                        scale = [random_scale, random_scale, random_scale];
+                        if (random_scale < 0.20) translation = [normalY, 0.10, normalX];
+                        else if (random_scale < 0.3) translation = [normalY, 0.15, normalX];
+                        else if (random_scale < 0.4) translation = [normalY, 0.20, normalX];
+                        else if (random_scale < 0.5) translation = [normalY, 0.25, normalX];
+                        rock_count++;
+                        model_name = `${modelType}${rock_count}`;
+                        break;
+                    case 'tree':
+                        // console.log("TREEEE")
+                        translation = [normalX, 0.25, normalY];
+                        scale = [0.8, 0.8, 0.8];
+                        tree_count++;
+                        model_name = `${modelType}${tree_count}`;
+                        break;
+                    default:
+                        console.log("Not supposed to procedurally generate this model!!");
                 }
+                
+                // console.log("Object Translation: ", translation);
+                // Instantiate new model node
+                let modelNode = new ModelNode(
+                    this.instantiateModel(modelType, gl, shader), 
+                    model_name, 
+                    'model', 
+                    mat4.fromRotationTranslationScale(mat4.create(), rotation, translation, scale)
+                );
     
-                // Instantiate model node
-                // let modelNode = new ModelNode(
-                //     this.instantiateModel(modelType, gl, shader), 
-                //     `${modelType}_${x}_${y}`, 
-                //     'model', 
-                //     mat4.fromTranslation(mat4.create(), translation) // Place translation from grid to scene
-                // );
-    
-                // // Add node to the scenegraph
-                // this.scenegraph.addChild(modelNode);
+                // Add node as platform child
+                platform_node.addChild(modelNode);
+
+                // Set the child's parent to be the platform
+                modelNode.setParent(platform_node);
             }
         }
+        platform_node.setTransformation(platform_node.transformation);
+        console.log("PLATFORM CHILDREN COUNT: ", platform_node.children.length);
     }
-
-
 
 }
 

@@ -2,11 +2,11 @@ import * as THREE from "./js/lib/glmatrix/three.js"
 
 class ProcGeneration {
 
-    constructor(seed=0) {
-        this.height = 3;
-        this.width = 3;
+    constructor(seed) {
+        this.height = 10;
+        this.width = 10;
         this.seed = seed;
-        console.log("SEED:", seed);
+        console.log("Initial SEED:", seed);
 
         // Initialize the permutation table and gradient vectors
         this.perm = [];
@@ -55,34 +55,60 @@ class ProcGeneration {
 
     // create map for terrain generation
     // value is a 50x50 matrix
-    mapGeneration() {
+    objectPlacementGeneration() {
 
         let value = [];   
         for (let y = 0; y < this.height; y++) {
             value[y] = [];
             for (let x = 0; x < this.width; x++) {      
                 // skip middle lane
-                if (y >= 20 && y <= 30) {
+                if (y >= (2/5 * this.height) && y <= (3/5 * this.height)) {
                     value[y][x] = null;
                     continue;
                 }
+                console.log("SEED FOR GENERATION: ", this.seed);
 
-                let nx = (x + this.seed)/this.width - 0.5, ny = (y + this.seed)/this.height - 0.5; // offset coordinates with seed
+                // offset coordinates with seed
+                let nx = (x * this.seed)/this.width - 0.5;
+                let ny = (y * this.seed)/this.height - 0.5; 
+
                 let noise_result = THREE.normalize(this.perlinNoise(nx, ny));
+                console.log("NOISE RESULT: ", noise_result);
 
                 // determine model type
                 let model_type;
-                if (noise_result < 0.5) model_type = 'grass';
-                else if (noise_result < 0.9) model_type = 'rock';
+                if (noise_result < 0.6) model_type = 'grass';
+                else if (noise_result < 0.85) model_type = 'rock';
                 else if (noise_result <= 1.0) model_type = 'tree';
                 else console.log("Incorrect noise_result: ", noise_result);
 
                 value[y][x] = model_type;
-
             }
         }
 
         return value;
+    }
+    
+
+    terrainGeneration() {
+        let elevation = [];
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {      
+                let nx = x/this.width - 0.5, ny = y/this.height - 0.5;
+                let e = 1 * noise(1 * nx, 1 * ny) 
+                    + 0.5 * noise(2 * nx, 2 * ny)
+                    + 0.25 * noise(4 * nx, 4 * ny);
+                e = e / (1 + 0.5 + 0.25)
+                
+                let fudge_factor = 1.2;
+                elevation[y][x] = Math.pow(e*fudge_factor, 0.50);
+            }
+          }
+    }
+
+    biome(e) {
+        if (e < 0.10) return 'WATER';
+        return 'LAND';
     }
 }
 

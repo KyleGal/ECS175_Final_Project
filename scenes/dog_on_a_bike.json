@@ -75,13 +75,47 @@
                 ]
             },
             {
-                "name": "platforn_node",
+                "name": "platform_node",
                 "type": "model",
                 "content": "platform",
                 "transformation": {
                     "translation": [0, -1, 0]
                 },
-                "children": []
+                "children": [
+                    {
+                        "name": "grass",
+                        "type": "model",
+                        "content": "grass",
+                        "transformation": {
+                            "translation": [0.75, -0.25, 0.75],
+                            "scale": [0.5, 0.5, 0.5],
+                            "rotation": [0, 45, 0]
+                        },
+                        "children": []
+                    },
+                    {
+                        "name": "rock",
+                        "type": "model",
+                        "content": "rock",
+                        "transformation": {
+                            "translation": [-0.5, 0.25, -0.8],
+                            "scale": [0.5, 0.5, 0.5]
+                            
+                        },
+                        "children": []
+                    },
+                    {
+                        "name": "tree",
+                        "type": "model",
+                        "content": "tree",
+                        "transformation": {
+                            "translation": [-0.3, 0.25, 0.75],
+                            "scale": [0.8, 0.8, 0.8],
+                            "rotation": [0, 22.5, 0]
+                        },
+                        "children": []
+                    }
+                ]
             },
             {
                 "name": "biking_dog",
@@ -90,39 +124,6 @@
                 "transformation": {
                     "translation": [0, -0.73, 0],
                     "scale": [0.25, 0.25, 0.25]
-                },
-                "children": []
-            },
-            {
-                "name": "grass",
-                "type": "model",
-                "content": "grass",
-                "transformation": {
-                    "translation": [0.75, -1.25, 0.75],
-                    "scale": [0.5, 0.5, 0.5],
-                    "rotation": [0, 45, 0]
-                },
-                "children": []
-            },
-            {
-                "name": "rock",
-                "type": "model",
-                "content": "rock",
-                "transformation": {
-                    "translation": [-0.5, -0.8, -0.8],
-                    "scale": [0.5, 0.5, 0.5]
-                    
-                },
-                "children": []
-            },
-            {
-                "name": "tree",
-                "type": "model",
-                "content": "tree",
-                "transformation": {
-                    "translation": [-0.3, -0.70, 0.75],
-                    "scale": [0.8, 0.8, 0.8],
-                    "rotation": [0, 22.5, 0]
                 },
                 "children": []
             }

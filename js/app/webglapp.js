@@ -42,7 +42,7 @@ class WebGlApp
         this.animation_step = 0
 
         // Create a procedural generation instance for terrain
-        let seed = 42;
+        let seed = app_state.getState( 'Procedural Generation' );
         this.proc_gen = new ProcGeneration(seed);
 
         // Declare a variable to hold a Scene
@@ -187,14 +187,15 @@ class WebGlApp
         }
 
         // Procedural Geneartion
-        let old_seed = -100;
+        let old_seed = this.proc_gen.seed;
         let new_seed = app_state.getState('Procedural Generation');
+        // console.log("New Seed: ", new_seed);
         if (new_seed != old_seed) {
-            // console.log(new_seed);
+            console.log("New Seed: ", new_seed);
             // console.log(old_seed);
             if (this.scene != null) {
                 this.proc_gen.seed = new_seed;
-                const procMap = this.proc_gen.mapGeneration();
+                const procMap = this.proc_gen.objectPlacementGeneration();
                 this.scene.generateGridObjects(procMap, gl, this.shaders[this.active_shader]);
             }
             old_seed = new_seed;

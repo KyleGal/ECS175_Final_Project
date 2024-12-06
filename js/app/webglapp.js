@@ -42,7 +42,7 @@ class WebGlApp
         this.animation_step = 0
 
         // Create a procedural generation instance for terrain
-        let seed = app_state.getState( 'Procedural Generation' );
+        let seed = app_state.getState( 'Procedural Generation' ) + 1;
         this.proc_gen = new ProcGeneration(seed);
 
         // Declare a variable to hold a Scene
@@ -52,7 +52,7 @@ class WebGlApp
         // Bind a callback to the file dialog in the UI that loads a scene file
         app_state.onOpen3DScene((filename) => {
             let scene_config = JSON.parse(loadExternalFile(`./scenes/${filename}`))
-            this.scene = new Scene(scene_config, gl, this.shaders[this.active_shader], this.light_shader)
+            this.scene = new Scene(scene_config, gl, this.shaders[this.active_shader], this.light_shader, this.proc_gen);
             return this.scene
         })
 
@@ -188,7 +188,7 @@ class WebGlApp
 
         // Procedural Geneartion
         let old_seed = this.proc_gen.seed;
-        let new_seed = app_state.getState('Procedural Generation');
+        let new_seed = app_state.getState('Procedural Generation')+1;
         // console.log("New Seed: ", new_seed);
         if (new_seed != old_seed) {
             console.log("New Seed: ", new_seed);
@@ -197,6 +197,7 @@ class WebGlApp
                 this.proc_gen.seed = new_seed;
                 const procMap = this.proc_gen.objectPlacementGeneration();
                 this.scene.generateGridObjects(procMap, gl, this.shaders[this.active_shader]);
+                
             }
             old_seed = new_seed;
         }

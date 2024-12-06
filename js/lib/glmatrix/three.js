@@ -27,4 +27,15 @@ export function normalize( value ) {
     return (value + 1) / 2;
 }
 
+function xorshift32(seed) {
+    var t = seed ^ (seed << 21);
+    t ^= t >>> 35;
+    t ^= t << 4;
+    return (t >>> 0) / 0x7FFFFFFF - 1;
+}
 
+export function seedrandom(seed) {
+    let rng = xorshift32(seed);
+
+    return this.normalize(rng);
+}

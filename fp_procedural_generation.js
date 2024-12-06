@@ -3,8 +3,8 @@ import * as THREE from "./js/lib/glmatrix/three.js"
 class ProcGeneration {
 
     constructor(seed) {
-        this.height = 10;
-        this.width = 10;
+        this.height = 20;
+        this.width = 20;
         this.seed = seed;
         console.log("Initial SEED:", seed);
 
@@ -53,62 +53,63 @@ class ProcGeneration {
         );
     }
 
-    // create map for terrain generation
-    // value is a 50x50 matrix
+    // place trees, rocks, and grass
     objectPlacementGeneration() {
-
-        let value = [];   
+        let perlin_noise = [], ret_map = [];
         for (let y = 0; y < this.height; y++) {
-            value[y] = [];
-            for (let x = 0; x < this.width; x++) {      
-                // skip middle lane
-                if (y >= (2/5 * this.height) && y <= (3/5 * this.height)) {
-                    value[y][x] = null;
-                    continue;
-                }
-                console.log("SEED FOR GENERATION: ", this.seed);
-
-                // offset coordinates with seed
-                let nx = (x * this.seed)/this.width - 0.5;
-                let ny = (y * this.seed)/this.height - 0.5; 
-
-                let noise_result = THREE.normalize(this.perlinNoise(nx, ny));
-                console.log("NOISE RESULT: ", noise_result);
-
-                // determine model type
-                let model_type;
-                if (noise_result < 0.6) model_type = 'grass';
-                else if (noise_result < 0.85) model_type = 'rock';
-                else if (noise_result <= 1.0) model_type = 'tree';
-                else console.log("Incorrect noise_result: ", noise_result);
-
-                value[y][x] = model_type;
+            perlin_noise[y] = [];
+            ret_map[y] = [];
+            for (let x = 0; x < this.width; x++) {
+                let nx = x / this.width - 0.5, ny = y / this.height - 0.5;
+                perlin_noise[y][x] = this.perlinNoise(50*nx, 50*ny);
             }
         }
 
-        return value;
+        let R = 3; // object frequency (smaller means more objects)
+        for (let yc = 0; yc < this.height; yc++) {
+            for (let xc = 0; xc < this.width; xc++) {
+                let max = 0;
+            
+                for (let dy = -R; dy <= R; dy++) {
+                    for (let dx = -R; dx <= R; dx++) {
+                        let xn = dx + xc, yn = dy + yc;
+                        if (0 <= yn && yn < this.height && 0 <= xn && xn < this.width) {
+                            let e = perlin_noise[yn][xn];
+                            if (e > max) { max = e; }
+                        }
+                    }
+                }
+                ret_map[yc][xc] = [perlin_noise[yc][xc], max];
+            }
+        }
+
+        return ret_map;
+
     }
-    
 
     terrainGeneration() {
+        // Numbers we can adjust to get different terrain
+        let fudge_factor = 1.2;
+        let pow = 2.0; // higher exponent means flatter valleys
+
         let elevation = [];
         for (let y = 0; y < this.height; y++) {
-            for (let x = 0; x < this.width; x++) {      
-                let nx = x/this.width - 0.5, ny = y/this.height - 0.5;
-                let e = 1 * noise(1 * nx, 1 * ny) 
-                    + 0.5 * noise(2 * nx, 2 * ny)
-                    + 0.25 * noise(4 * nx, 4 * ny);
-                e = e / (1 + 0.5 + 0.25)
-                
-                let fudge_factor = 1.2;
-                elevation[y][x] = Math.pow(e*fudge_factor, 0.50);
+            elevation[y] = [];
+            for (let x = 0; x < this.width; x++) {  
+                // let nx = (x*this.seed)/this.width - 0.5, ny = (y*this.seed)/this.height - 0.5; 
+                let nx = x/this.width - 0.5 + (this.seed * 0.01), ny = y/this.height - 0.5 + (this.seed * 0.01);
+                // fractal terrain for hills/mountains
+                let e = 1 * this.perlinNoise(1 * nx, 1 * ny) 
+                    + 0.5 * this.perlinNoise(2 * nx, 2 * ny)
+                    + 0.25 * this.perlinNoise(4 * nx, 4 * ny);
+                e = e / (1 + 0.5 + 0.25);
+                // if (e < 0) e = Math.abs(e);
+
+                // raising e to some power results in flat valleys
+                elevation[y][x] = Math.pow(e*fudge_factor, pow);
             }
           }
-    }
-
-    biome(e) {
-        if (e < 0.10) return 'WATER';
-        return 'LAND';
+        return elevation;
     }
 }
 

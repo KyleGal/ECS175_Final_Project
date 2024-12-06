@@ -8,6 +8,8 @@ import * as quat4 from "../lib/glmatrix/quat.js"
 
 import { OBJLoader } from "../../assignment3.objloader.js"
 import { Light, AmbientLight, DirectionalLight, PointLight } from "./light.js"
+import ProcGeneration from '../../fp_procedural_generation.js'
+import * as THREE from "../lib/glmatrix/three.js"
 
 
 /**
@@ -31,12 +33,18 @@ class Scene {
      * @param {WebGL2RenderingContext} gl The webgl2 rendering context
      * @param {Shader} shader The shader to be used to draw objects
      * @param {Shader} light_shader The shader to be used to represent lights in the scene
+     * @param {ProcGeneration} procedural_generation The procedural generation class used throughout scene
      */
-    constructor(scene_config, gl, shader, light_shader) {
+    constructor(scene_config, gl, shader, light_shader, procedural_generation) {
         this.scene_config = scene_config
 
         // First load the OBJ models
         this.models = 'models' in scene_config ? this.loadModels(scene_config.models, gl) : {}
+
+        // modify platform to become a heightmap
+        this.proc_gen = procedural_generation;
+        this.heightmap = true;
+        this.generateHeightMap(this.heightmap);
 
         // Then load all the lights and reset the lights in the shader
         this.lights = 'lights' in scene_config ? this.loadLights(scene_config.lights) : {}
@@ -75,6 +83,54 @@ class Scene {
     }
 
     /**
+     * Generate height map for our scene
+     * Used for procedural generation of terrain
+     * 
+     */
+    generateHeightMap() {
+        if (this.heightmap && 'platform' in this.models) {
+
+            // calculate height map
+            let height_elevation = this.proc_gen.terrainGeneration();
+
+            // adjust 'platform' vectors to mirror height map
+            let material = this.models['platform'][2];
+            let i = 0;
+            for (let x = 0; x < this.proc_gen.height; x++) {
+                for (let y = 0; y < this.proc_gen.width; y++) {
+                    let curr_elevation = height_elevation[y][x];
+                    // let curr_elevation = 1.0;
+
+                    if (material.hasTexture()) {
+                        // console.log("VERTICES BEFORE: ", this.models['platform'][0][i],this.models['platform'][0][i+1],this.models['platform'][0][i+2]);
+
+                        // change y of vertex position
+                        this.models['platform'][0][i+1] = curr_elevation;
+                        // change y of vertex normals
+                        this.models['platform'][0][i+4] = curr_elevation;
+                        // change y of vertex tangents
+                        this.models['platform'][0][i+7] = curr_elevation;
+
+                        // console.log("VERTICES AFTER: ", this.models['platform'][0][i],this.models['platform'][0][i+1],this.models['platform'][0][i+2]);
+
+                        i += 11;
+                    } else {
+                        // change y of vertex position
+                        this.models['platform'][0][i+1] = curr_elevation;
+                        // change y of vertex normals
+                        this.models['platform'][0][i+4] = curr_elevation;
+
+                        i += 6;
+                    }
+                }
+            }
+
+            // rerender terrain
+            
+        }   
+    }
+
+    /**
      * Loads model geometry defined by the config.
      * This uses the OBJLoader class to load OBJ files.
      * 
@@ -88,9 +144,10 @@ class Scene {
             // Load the OBJ file
             let loader = new OBJLoader(model_config.obj)
             models[model_config.name] = loader.load(gl)
+            console.log(model_config.name, ': ', models[model_config.name]);
         }
 
-        return models
+        return models;
     }
 
     /**
@@ -273,84 +330,129 @@ class Scene {
         }
         platform_node.children = [];
 
-        // render new objects based on procedural generated map
-        let grass_count, rock_count, tree_count = 0
+        // delete platform so that we can re-render with a new height map
+        let root_node = platform_node.parent;
+        const index = root_node.children.indexOf(platform_node);
+        console.log("PLATFORM INDEX: ", index);
+        // Remove platform_node
+        if (index !== -1) {
+            root_node.children.splice(index, 1); 
+        }
+
+        // generate new heightmap to platform
+        this.generateHeightMap();
+        // render new platform
+        let new_platform_node = new ModelNode(
+            this.instantiateModel('platform', gl, shader),
+            'platform_node',
+            'model',
+            mat4.fromRotationTranslationScale(mat4.create(), quat4.create(), [0, -1, 0], [1,1,1])
+
+        );
+        
+        // adjust parent and child relationship
+        new_platform_node.setParent( root_node );
+        root_node.addChild( new_platform_node );
+
+        platform_node = this.getNode( "platform_node" );
+
+        // render grass, rocks, and trees based on map
+        let grass_count, rock_count, tree_count = 0;
         let rotation = quat4.create(), translation = vec3.create(), scale = [1,1,1];
         for (let y = 0; y < procMap.length; y++) {
             for (let x = 0; x < procMap[y].length; x++) {
-                let modelType = procMap[y][x];
-                if (!modelType) continue; // Skip null (middle lane)
+                if (procMap[y][x][0] == procMap[y][x][1]) {
+                    // normalize x and y to map to grid
+                    const grid_size = procMap.length;
+                    let normalX = -0.75 + (x * 1.9 / grid_size) ;
+                    let normalY = -0.75 + (y * 1.9 / grid_size);
 
-                // normalize x and y to properly place on grid of [-1, 1]
-                const grid_size = procMap.length;
-                let normalX = ((2*x) / grid_size) - 1; // (x - xMIN) / (xMAX - xMIN)
-                let normalY = ((2*y) / grid_size) - 1;
+                    // Skip any models in the middle of the path (between the middle of [1,1])
+                    if (normalY > -1+(4/10 * 2) && normalY < -1+(6/10 * 2)) continue;
 
-                console.log("Pre-Mapping: (", x, ", ", y, ")");
-                console.log("Grid Placement: (", normalX, ", ", normalY, ")");
+                    /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+                     * object frequency percentages for grass, rocks, and trees (able to adjust) *
+                     * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+                    let g_perc = 60, r_perc = 25, t_perc = 15;
+                    if (g_perc + r_perc + t_perc != 100)
+                        console.log("Object frequency does not add up to 100%")
 
+                    // randomly choose the object to place based on seed
+                    let rng = THREE.seedrandom(this.proc_gen.seed);
+                    let choice = Math.random();
+                    let model_type;
+                    if (choice < g_perc/100) model_type = 'grass';
+                    else if (choice < (g_perc+r_perc)/100) model_type = 'rock';
+                    else if (choice <= (g_perc+r_perc+t_perc)/100) model_type = 'tree';
+                    else console.log("Incorrect choice result: ", choice);
 
-                // map object to grid in scene based on x,y
-                let model_name;
-                let random_scale = Math.random() * (0.5 - 0.1) + 0.1;
-                switch(modelType) {
-                    case 'grass':
-                        // move x and y a little bit so that objects are not uniform in placement
-                        normalX = normalX + (Math.random() * (0.2 - 0))
-                        normalY = normalY + (Math.random() * (0.2 - 0))
+                    // map object to grid in scene based on x,y
+                    let model_name;
+                    let random_scale = Math.random() * (0.5 - 0.1) + 0.1;
+                    if (random_scale < 0.01) random_scale = 0.3;
+                    let random_rotation = Math.random() * 90;
+                    switch(model_type) {
+                        case 'grass':
+                            // change y translation depending on scale
+                            scale = [random_scale, random_scale, random_scale];
+                            if (random_scale < 0.2) translation = [normalY, -0.7, normalX];
+                            else if (random_scale < 0.3) translation = [normalY, -0.13, normalX];
+                            else if (random_scale < 0.4) translation = [normalY, -0.17, normalX];
+                            else if (random_scale < 0.5) translation = [normalY, -0.23, normalX];
 
-                        // ensure normalX and normalY do not go beyond 1
-                        if (normalX > 1.0) normalX = 0.9 + (Math.random() * (0.2 - 0));
-                        if (normalY > 1.0) normalY = 0.9 + (Math.random() * (0.2 - 0));
-                        
-                        // change y translation depending on scale
-                        scale = [random_scale, random_scale, random_scale];
-                        if (random_scale < 0.2) translation = [normalY, -0.10, normalX];
-                        else if (random_scale < 0.3) translation = [normalY, -0.15, normalX];
-                        else if (random_scale < 0.4) translation = [normalY, -0.20, normalX];
-                        else if (random_scale < 0.5) translation = [normalY, -0.25, normalX];
-                        grass_count++;
-                        model_name = `${modelType}${grass_count}`;
-                        break;
-                    case 'rock':
-                        // change y translation depending on scale
-                        scale = [random_scale, random_scale, random_scale];
-                        if (random_scale < 0.20) translation = [normalY, 0.10, normalX];
-                        else if (random_scale < 0.3) translation = [normalY, 0.15, normalX];
-                        else if (random_scale < 0.4) translation = [normalY, 0.20, normalX];
-                        else if (random_scale < 0.5) translation = [normalY, 0.25, normalX];
-                        rock_count++;
-                        model_name = `${modelType}${rock_count}`;
-                        break;
-                    case 'tree':
-                        // console.log("TREEEE")
-                        translation = [normalX, 0.25, normalY];
-                        scale = [0.8, 0.8, 0.8];
-                        tree_count++;
-                        model_name = `${modelType}${tree_count}`;
-                        break;
-                    default:
-                        console.log("Not supposed to procedurally generate this model!!");
+                            // random object rotation
+                            rotation = quat4.fromEuler( quat4.create(), 0, random_rotation, 0 );
+
+                            grass_count++;
+                            model_name = `${model_type}${grass_count}`;
+                            break;
+                        case 'rock':
+                            // change y translation depending on scale
+                            scale = [random_scale, random_scale, random_scale];
+                            if (random_scale < 0.20) translation = [normalY, 0.12, normalX];
+                            else if (random_scale < 0.3) translation = [normalY, 0.17, normalX];
+                            else if (random_scale < 0.4) translation = [normalY, 0.22, normalX];
+                            else if (random_scale < 0.5) translation = [normalY, 0.27, normalX];
+
+                            // random object rotation
+                            rotation = quat4.fromEuler( quat4.create(), 0, random_rotation, 0 );
+
+                            rock_count++;
+                            model_name = `${model_type}${rock_count}`;
+                            break;
+                        case 'tree':
+                            translation = [normalX, 0.27, normalY];
+                            scale = [0.8, 0.8, 0.8];
+
+                            // random object rotation
+                            rotation = quat4.fromEuler( quat4.create(), 0, random_rotation, 0 );
+
+                            tree_count++;
+                            model_name = `${model_type}${tree_count}`;
+                            break;
+                        default:
+                            console.log("Not supposed to procedurally generate this model!!");
+                    }
+
+                    // Instantiate new model node
+                    let modelNode = new ModelNode(
+                        this.instantiateModel(model_type, gl, shader), 
+                        model_name, 
+                        'model', 
+                        mat4.fromRotationTranslationScale(mat4.create(), rotation, translation, scale)
+                    );
+        
+                    // Add node as platform child
+                    platform_node.addChild(modelNode);
+
+                    // Set the child's parent to be the platform
+                    modelNode.setParent(platform_node);
                 }
-                
-                // console.log("Object Translation: ", translation);
-                // Instantiate new model node
-                let modelNode = new ModelNode(
-                    this.instantiateModel(modelType, gl, shader), 
-                    model_name, 
-                    'model', 
-                    mat4.fromRotationTranslationScale(mat4.create(), rotation, translation, scale)
-                );
-    
-                // Add node as platform child
-                platform_node.addChild(modelNode);
-
-                // Set the child's parent to be the platform
-                modelNode.setParent(platform_node);
             }
         }
+        
         platform_node.setTransformation(platform_node.transformation);
-        console.log("PLATFORM CHILDREN COUNT: ", platform_node.children.length);
+        // console.log("PLATFORM CHILDREN COUNT: ", platform_node.children.length);
     }
 
 }

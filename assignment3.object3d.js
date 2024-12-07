@@ -305,7 +305,85 @@ class ShadedObject3D extends Object3D {
     }
 }
 
+class LeafParticle extends ShadedObject3D {
+    constructor(gl, shader, vertices, indices, draw_mode, material, position, velocity, lifespan) {
+        // Call parent constructor to initialize geometry buffers and material
+        //console.log("LeafParticle constructor reached", material)
+        super(gl, shader, vertices, indices, draw_mode, material);
+        
+        // Particle-specific properties
+        this.position = position;
+        this.velocity = velocity;
+        this.lifespan = lifespan;
+        this.shouldRemove = false;
+
+        //this.gravity = vec3.fromValues(0, -0.005, 0); // Gravity effect
+        let scale = vec3.fromValues(0.0625, 0.0625, 0.0625);
+
+        const randomChangeX = (Math.random() - 0.5) * 0.5;  // Small random change
+        const randomChangeY = (Math.random() - 0.5) * 0.1;  // Small random change (must be negative thourh)
+        const randomChangeZ = (Math.random() - 0.5) * 0.5;  // Small random change
+
+        this.position[0] += randomChangeX; 
+        this.position[1] += randomChangeY
+        this.position[2] += randomChangeZ;
+        this.setTransformation(mat4.translate(mat4.create(), this.model_matrix, this.position));
+
+        this.setTransformation(mat4.scale(mat4.create(), this.model_matrix, scale))
+
+    }
+
+    update(deltaTime) {
+        if (this.shouldRemove) {
+            return
+        }
+    
+        // Apply gravity to the velocity
+        //this.velocity = vec3.add(this.velocity, this.velocity, vec3.scale(vec3.create(), this.gravity, deltaTime));
+
+        // // Update position based on velocity
+        const randomChangeX = (Math.random() - 0.5) * 0.1;  // Small random change
+        const randomChangeY = (Math.random() - 1) * 0.1;  // Small random change (must be negative thourh)
+        const randomChangeZ = (Math.random() - 0.5) * 0.1;  // Small random change
+
+        // Apply these random changes to the velocity
+        this.velocity[0] += randomChangeX; // Randomize X velocity
+        this.velocity[1] += randomChangeY; // Randomize Y velocity
+        this.velocity[2] += randomChangeZ; // Randomize Z velocity
+        //console.log("velocity", this.velocity)
+
+        this.position = vec3.add(this.position, this.position, vec3.scale(vec3.create(), this.velocity, deltaTime));
+        //console.log("updated velocity", this.velocity)
+        // Decrease lifespan
+        this.lifespan -= deltaTime;
+
+        // If lifespan is over, mark for removal
+        if (this.lifespan <= 0) {
+            this.shouldRemove = true;
+            console.log("removed leaf")
+        }
+
+        // Update the transformation matrix based on the new position
+        //this.setTransformation(mat4.translate(mat4.create(), this.model_matrix, this.position));
+        this.setTransformation(mat4.translate(mat4.create(), this.model_matrix, vec3.scale(vec3.create(), this.velocity, deltaTime)))
+        //console.log("updating transformation")
+    }
+    
+    createVAO( gl, shader ){
+        //console.log("createVAO call from leaf", this.material)
+        super.createVAO(gl, shader);
+    }
+
+    render(gl) {
+        // Use the parent class render method for standard rendering
+        this.update(1/600)
+        super.render(gl);
+    }
+}
+
+
 export {
     Object3D,
     ShadedObject3D,
+    LeafParticle
 }

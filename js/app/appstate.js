@@ -18,10 +18,10 @@ class AppState
             //     'Normals': document.getElementById( 'shadingDebugNormals' ),
             // },
             'Procedural Generation': document.getElementById( 'seedInput' ),
-            'Particle Systems': {
-                'Wind': document.getElementById( 'windInput' ),
-                'Gravity': document.getElementById( 'gravityInput' )
-            },
+            
+            'Wind': document.getElementById( 'windInput' ),
+            'Gravity': document.getElementById( 'gravityInput' ),
+
             'Control':
             {
                 'Camera': document.getElementById( 'controlCamera' ),
@@ -37,7 +37,9 @@ class AppState
             'Procedural Generation': '',
             'Particle Systems': '',
             'Control': '',
-            'Select Scene Node': ''
+            'Select Scene Node': '',
+            'Wind': '0.5', // Initial wind value
+            'Gravity': '0.5' // Initial gravity value
         }
 
         // Update UI with default values
@@ -71,6 +73,15 @@ class AppState
         this.ui_categories['Procedural Generation'].onchange = (evt) => {
             this.ui_state['Procedural Generation'] = evt.target.value
         }
+
+        this.ui_categories['Wind'].addEventListener('input', (evt) => {
+            this.ui_state['Wind'] = evt.target.value;
+        });
+
+        this.ui_categories['Gravity'].addEventListener('input', (evt) => {
+            this.ui_state['Gravity'] = evt.target.value;
+        });
+
     }
 
     /**

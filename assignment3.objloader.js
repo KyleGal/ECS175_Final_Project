@@ -346,7 +346,17 @@ class OBJLoader {
 
             let vtn = component.split('/')
             if (vtn.length <= entry_index)
-                throw `No face entry found for entry indes ${entry_index}`
+                if (entry_index === 1) {
+                    // Default texture index is 0 if missing
+                    vtn.push('0');
+                } 
+                else if (entry_index === 2) {
+                    // Default normal index is 0 if missing
+                    vtn.push('0');
+                }
+                else {
+                    throw `No face entry found for entry index ${entry_index}`;
+                }
             face.push(parseInt(vtn[entry_index])-1)
         }
 
@@ -355,6 +365,7 @@ class OBJLoader {
         } else if (face.length == 4) {
             return this.triangulateFace(face)
         } else {
+            return this.triangulateFace(face)
             throw `Unexpected number of entries for face. Expected 3 or 4 but got ${face.length}`
         }
     }
@@ -367,11 +378,25 @@ class OBJLoader {
      * @returns {Array<Number>} The newly created list containing triangulated indices
      */
     triangulateFace(face)
-    {
-        return [
-            face[0], face[1], face[3],
-            face[1], face[2], face[3]
-        ]
+    {   
+        if(face.length == 4) {
+            return [
+                face[0], face[1], face[3],
+                face[1], face[2], face[3]
+            ]
+        }
+        else if (face.length > 4) {
+            const triangles = [];
+            // Always pick the first vertex in the face and connect it with pairs of the subsequent vertices
+            // This works for any face with more than 3 vertices
+            for (let i = 1; i < face.length - 1; i++) {
+                // Create a triangle with the first vertex and two subsequent vertices
+                triangles.push([face[0], face[i], face[i + 1]]);
+            }
+            // Flatten the array of triangles (each triangle is a 3-element array)
+            return triangles.flat();
+        }
+        
     }
 }
 

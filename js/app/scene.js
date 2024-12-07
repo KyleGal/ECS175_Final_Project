@@ -11,7 +11,7 @@ import { Light, AmbientLight, DirectionalLight, PointLight } from "./light.js"
 import ProcGeneration from '../../fp_procedural_generation.js'
 import * as THREE from "../lib/glmatrix/three.js"
 
-
+import ParticleSystem from "../../fp_particle_systems.js"
 /**
  * A Scene represents a set of objects to be drawn on screen
  * Scenes are configured with a scene file which is loaded from disk
@@ -56,11 +56,66 @@ class Scene {
 
         // Trigger the computation of all hierarchical transformations by setting the root's transformation
         this.scenegraph.setTransformation(this.scenegraph.transformation)
+
+        this.centroids = [];
+        this.activeSpawnIntervals = [];
+        this.particleSystem = this.createParticleSystem(gl, shader); //instance particlesystem
+        this.gravity = 0.5;
+        this.wind = 0.05;
+    }
+
+    setGravityWind(gravity, wind) {
+        this.gravity = gravity;
+        this.wind = wind;
+    }
+
+    spawnLeaf(centroid) {
+        // let position = vec3.fromValues(0,0,0);
+
+        let position = vec3.clone(centroid);
+
+        const randomWindX = (Math.random() - 0.5) * 2;  // Random value between -1 and 1
+        const randomWindZ = (Math.random() - 0.5) * 2;  // Random value between -1 and 1
+
+        const windVelocityX = randomWindX * this.wind; // Wind effect on X
+        const windVelocityZ = randomWindZ * this.wind; // Wind effect on Z
+        const gravityVelocityY = -10 * this.gravity;
+
+        let velocity = vec3.fromValues(windVelocityX, gravityVelocityY, windVelocityZ);
+        const lifespan = 20 + Math.random() * 30;
+        this.particleSystem.spawnLeaf(position, velocity, lifespan);
+        //console.log("spawn velocity", velocity)
+        //}
+    }
+
+    startLeafSpawning(centroid) {
+        const spawnInterval = 500; // Interval in milliseconds to spawn new leaves (e.g., every 1000ms = 1 second)
+        console.log("starting leaf loop", this.centroids, "centroid", centroid)
+
+        if (this.centroids.some(existingCentroid => vec3.equals(existingCentroid, centroid))) {
+            console.log("made it in")
+            const intervalID = setInterval(() => {
+                this.spawnLeaf(centroid);
+            }, spawnInterval);
+            this.activeSpawnIntervals.push(intervalID)
+        }
+    }
+    clearActiveSpawnIntervals() {
+        console.log("Clearing active leaf spawn intervals");
+        for (let intervalId of this.activeSpawnIntervals) {
+            clearInterval(intervalId); // Stop all old leaf spawn intervals
+        }
+        this.activeSpawnIntervals = []; // Reset the intervals array
+    }
+
+    createParticleSystem(gl, shader) {
+        const particleSystem = new ParticleSystem(gl, shader);
+        return particleSystem;
     }
 
     /**
      * Reset light settings in the shader
-     * This is needed when switching between scenes, 
+     * This is needed when switching between scenes,
      * as uniforms are otherwise preserved
      * 
      * @param {Shader} shader The shader to be used to draw objects
@@ -124,10 +179,8 @@ class Scene {
                     }
                 }
             }
-
             // rerender terrain
-            
-        }   
+        }
     }
 
     /**
@@ -315,6 +368,10 @@ class Scene {
      */
     render( gl ) {
         this.scenegraph.render( gl )
+
+        if (this.particleSystem) {
+            this.particleSystem.render(gl);
+        }
     }
 
     /** 
@@ -323,6 +380,10 @@ class Scene {
      */
     generateGridObjects(procMap, gl, shader) {
         // delete current grass, rock, and tree objects
+        //console.log("Generating new grid")
+        this.centroids = []
+        this.clearActiveSpawnIntervals()
+        console.log("Centroids should be clear", this.centroids)
         let platform_node = this.getNode( "platform_node" );
         let platform_children = platform_node.getNodes;
         for (let i = 1; i < platform_children.length; i++) {
@@ -366,6 +427,9 @@ class Scene {
                     const grid_size = procMap.length;
                     let normalX = -0.75 + (x * 1.9 / grid_size) ;
                     let normalY = -0.75 + (y * 1.9 / grid_size);
+                    if (normalX > 1.0) normalX = 0.85;
+                    if (normalY > 1.0) normalY = 0.85;
+                    
 
                     // Skip any models in the middle of the path (between the middle of [1,1])
                     if (normalY > -1+(4/10 * 2) && normalY < -1+(6/10 * 2)) continue;
@@ -429,6 +493,7 @@ class Scene {
 
                             tree_count++;
                             model_name = `${model_type}${tree_count}`;
+                            this.centroids.push(vec3.fromValues(normalX - 0.125, -0.25, normalY - 0.125))
                             break;
                         default:
                             console.log("Not supposed to procedurally generate this model!!");
@@ -449,6 +514,9 @@ class Scene {
                     modelNode.setParent(platform_node);
                 }
             }
+        }
+        for (let i = 0; i < this.centroids.length; i ++) {
+            this.startLeafSpawning(this.centroids[i])
         }
         
         platform_node.setTransformation(platform_node.transformation);

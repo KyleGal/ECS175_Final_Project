@@ -197,9 +197,18 @@ class WebGlApp
                 this.proc_gen.seed = new_seed;
                 const procMap = this.proc_gen.objectPlacementGeneration();
                 this.scene.generateGridObjects(procMap, gl, this.shaders[this.active_shader]);
-                
+                console.log("generating new grid")
             }
             old_seed = new_seed;
+        }
+
+        let gravity = app_state.getState('Gravity')
+        let wind = app_state.getState('Wind')
+        
+
+        if (this.scene != null) {
+            //console.log("setting gravity/wind", gravity, wind)
+            this.scene.setGravityWind(gravity, wind)
         }
         
         

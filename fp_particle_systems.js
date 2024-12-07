@@ -33,7 +33,7 @@ class ParticleSystem {
         let shininess = 10.0
         //let map_kD = new Texture(`models/leaf/high_res_leaf_texture_by_hhh316.jpg`, gl)
 
-        this.leafMaterial = new Material(kA, kD, kS, shininess, map_kD)
+        this.leafMaterial = new Material(kA, kD, kS, shininess)
 
         //console.log("material from particlesystem constructor", this.leafMaterial)
         // console.log('u_material.kA', this.leafMaterial.kA)

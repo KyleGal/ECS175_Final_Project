@@ -308,7 +308,7 @@ class ShadedObject3D extends Object3D {
 class LeafParticle extends ShadedObject3D {
     constructor(gl, shader, vertices, indices, draw_mode, material, position, velocity, lifespan) {
         // Call parent constructor to initialize geometry buffers and material
-        //console.log("LeafParticle constructor reached", material)
+        
         super(gl, shader, vertices, indices, draw_mode, material);
         
         // Particle-specific properties
@@ -317,8 +317,8 @@ class LeafParticle extends ShadedObject3D {
         this.lifespan = lifespan;
         this.shouldRemove = false;
 
-        //this.gravity = vec3.fromValues(0, -0.005, 0); // Gravity effect
-        let scale = vec3.fromValues(0.0625, 0.0625, 0.0625);
+        
+        let scale = vec3.fromValues(0.0625, 0.0625, 0.0625); // 1/16
 
         const randomChangeX = (Math.random() - 0.5) * 0.5;  // Small random change
         const randomChangeY = (Math.random() - 0.5) * 0.1;  // Small random change (must be negative thourh)
@@ -327,8 +327,8 @@ class LeafParticle extends ShadedObject3D {
         this.position[0] += randomChangeX; 
         this.position[1] += randomChangeY
         this.position[2] += randomChangeZ;
-        this.setTransformation(mat4.translate(mat4.create(), this.model_matrix, this.position));
 
+        this.setTransformation(mat4.translate(mat4.create(), this.model_matrix, this.position));
         this.setTransformation(mat4.scale(mat4.create(), this.model_matrix, scale))
 
     }

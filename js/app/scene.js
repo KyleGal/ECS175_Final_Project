@@ -61,7 +61,7 @@ class Scene {
         this.activeSpawnIntervals = [];
         this.particleSystem = this.createParticleSystem(gl, shader); //instance particlesystem
         this.gravity = 0.5;
-        this.wind = 0.05;
+        this.wind = 0.5;
     }
 
     setGravityWind(gravity, wind) {
@@ -70,22 +70,19 @@ class Scene {
     }
 
     spawnLeaf(centroid) {
-        // let position = vec3.fromValues(0,0,0);
 
         let position = vec3.clone(centroid);
 
         const randomWindX = (Math.random() - 0.5) * 2;  // Random value between -1 and 1
         const randomWindZ = (Math.random() - 0.5) * 2;  // Random value between -1 and 1
 
-        const windVelocityX = randomWindX * this.wind; // Wind effect on X
-        const windVelocityZ = randomWindZ * this.wind; // Wind effect on Z
-        const gravityVelocityY = -10 * this.gravity;
+        const windVelocityX = randomWindX * this.wind * 5; // Wind effect on X
+        const windVelocityZ = randomWindZ * this.wind * 5; // Wind effect on Z
+        const gravityVelocityY = -20 * this.gravity;
 
         let velocity = vec3.fromValues(windVelocityX, gravityVelocityY, windVelocityZ);
         const lifespan = 20 + Math.random() * 30;
         this.particleSystem.spawnLeaf(position, velocity, lifespan);
-        //console.log("spawn velocity", velocity)
-        //}
     }
 
     startLeafSpawning(centroid) {

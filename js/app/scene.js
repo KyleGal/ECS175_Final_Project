@@ -364,7 +364,7 @@ class Scene {
                 if (procMap[y][x][0] == procMap[y][x][1]) {
                     // normalize x and y to map to grid (kinda)
                     const grid_size = procMap.length;
-                    let normalX = -0.75 + (x * 1.9 / grid_size) ;
+                    let normalX = -0.75 + (x * 1.9 / grid_size);
                     let normalY = -0.75 + (y * 1.9 / grid_size);
                     if (normalX > 1.0) normalX = 0.85;
                     if (normalY > 1.0) normalY = 0.85;
@@ -381,7 +381,6 @@ class Scene {
 
                     // randomly choose the object to place based on seed
                     let rng = THREE.seedrandom(this.proc_gen.seed);
-                    // let choice = (rng * x * y) / (rng*20*20);
                     let choice = Math.random();
                     let model_type;
                     if (choice < g_perc/100) model_type = 'grass';

@@ -28,6 +28,7 @@ There is a convenient plugin for VSCode that lets you host the current working d
 ## Particle Systems
 
 (Calvin Yee)
+
 The 'Particles' (or leaves in this case) are managed by a ParticleSystem class, which is responsible for spawning the leaves, and has hardcoded loading for the leaf model and texture values. This was in part due to a formatting issue with the .mtl and .obj files that we were able to get for the leaves, for which the current ObjLoader and MtlLoader were not fully equipped to parse. 
 
 The Grid allows us to know exactly where we are placing the tree models, so these locations are passed into each leaf spawning loop to indicate where to generate leaves. When a new seed is generated, the old asynchornous processes are halted and replaced with new ones (as long as some trees are in the scene). 
@@ -40,6 +41,7 @@ The Wind and Gravity sliders scale the lateral and vertical velocities, respecti
 ## Procedural Generation
 
 (Kyle Galvez)
+
 Procedural generation is managed by the ProcGeneration class, which is responsible for object placement map and height map generation onto a 20x20 grid. The object placement and height map are applied to the platform model.
 
 The height map is generated using a Perlin noise function. Noise is added at different frequencies, which results in a mix of low frequency hills and small high frequency hills to make our terrain more realistic.
@@ -51,6 +53,7 @@ Users are able to change the seed to generate a new height map and object placem
 ## Shadow Mapping
 
 (Yunfei Kwan)
+
 (https://github.com/RinKwan/Final)
 
 Shadow mapping uses two shaders to render the scene from the perspective of the light source, and records the depth value of each pixel to generate a depth map. In the final rendering, each pixel is checked from the camera's perspective to see if it is illuminated. By comparing the depth value of the pixel with the value in the depth map, it can be determined whether the pixel is in the shadow.

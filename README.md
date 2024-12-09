@@ -38,3 +38,10 @@ The Wind and Gravity sliders scale the lateral and vertical velocities, respecti
 
 ## Procedural Generation
 
+Procedural generation is managed by the ProcGeneration class, which is responsible for object placement map and height map generation onto a 20x20 grid. The object placement and height map are applied to the platform model.
+
+The height map is generated using a Perlin noise function. Noise is added at different frequencies, which results in a mix of low frequency hills and small high frequency hills to make our terrain more realistic.
+
+Object placement is determined through a combination of the Perlin noise function and a fractal algorithm. Within a neighborhood size determined by some constant R, an object is placed at the highest noise value. A high R results in very sparse object placement, while a small R results in dense object placement. A tree, rock, or grass model is chosen at random to be placed at this max noise value.
+
+Users are able to change the seed to generate a new height map and object placement map.

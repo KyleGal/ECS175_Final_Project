@@ -45,3 +45,11 @@ The height map is generated using a Perlin noise function. Noise is added at dif
 Object placement is determined through a combination of the Perlin noise function and a fractal algorithm. Within a neighborhood size determined by some constant R, an object is placed at the highest noise value. A high R results in very sparse object placement, while a small R results in dense object placement. A tree, rock, or grass model is chosen at random to be placed at this max noise value.
 
 Users are able to change the seed to generate a new height map and object placement map.
+
+## Shadow Mapping
+
+(https://github.com/RinKwan/Final)
+
+Shadow mapping uses two shaders to render the scene from the perspective of the light source, and records the depth value of each pixel to generate a depth map. In the final rendering, each pixel is checked from the camera's perspective to see if it is illuminated. By comparing the depth value of the pixel with the value in the depth map, it can be determined whether the pixel is in the shadow.
+
+However, when shadow mapping a moving object in dog-bike, there was an unsolvable problem. The difficult part is to write the code into the framework according to homework 3. Our framework is not easy to expand the shadow function because shadows require two shaders. Our framework has only one shader. Adding another shader, however, there are always bugs. There is another very difficult problem. Shadow mapping must be compatible with two other programs. I added the shadow function to the shader, and finally merged them together, and the shader part conflicted. And I found that I could not complete the function by adding shadow mapping. js alone. I tried to rewrite the app files but could not display the lighting. As a result, I could see different colors but the picture was pitch black. Therefore, I did not integrate the code together but put it separately in github.

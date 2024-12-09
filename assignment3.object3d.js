@@ -338,44 +338,33 @@ class LeafParticle extends ShadedObject3D {
             return
         }
     
-        // Apply gravity to the velocity
-        //this.velocity = vec3.add(this.velocity, this.velocity, vec3.scale(vec3.create(), this.gravity, deltaTime));
 
-        // // Update position based on velocity
-        const randomChangeX = (Math.random() - 0.5) * 0.1;  // Small random change
-        const randomChangeY = (Math.random() - 1) * 0.1;  // Small random change (must be negative thourh)
-        const randomChangeZ = (Math.random() - 0.5) * 0.1;  // Small random change
+        //update position based on velocity
+        const randomChangeX = (Math.random() - 0.5) * 0.1;  // Small random changes
+        const randomChangeY = (Math.random() - 1) * 0.1;  // (must be negative thourh)
+        const randomChangeZ = (Math.random() - 0.5) * 0.1;
 
-        // Apply these random changes to the velocity
         this.velocity[0] += randomChangeX; // Randomize X velocity
         this.velocity[1] += randomChangeY; // Randomize Y velocity
         this.velocity[2] += randomChangeZ; // Randomize Z velocity
-        //console.log("velocity", this.velocity)
 
         this.position = vec3.add(this.position, this.position, vec3.scale(vec3.create(), this.velocity, deltaTime));
-        //console.log("updated velocity", this.velocity)
-        // Decrease lifespan
         this.lifespan -= deltaTime;
 
         // If lifespan is over, mark for removal
         if (this.lifespan <= 0) {
             this.shouldRemove = true;
-            console.log("removed leaf")
         }
 
         // Update the transformation matrix based on the new position
-        //this.setTransformation(mat4.translate(mat4.create(), this.model_matrix, this.position));
         this.setTransformation(mat4.translate(mat4.create(), this.model_matrix, vec3.scale(vec3.create(), this.velocity, deltaTime)))
-        //console.log("updating transformation")
     }
     
     createVAO( gl, shader ){
-        //console.log("createVAO call from leaf", this.material)
         super.createVAO(gl, shader);
     }
 
     render(gl) {
-        // Use the parent class render method for standard rendering
         this.update(1/600)
         super.render(gl);
     }

@@ -24,4 +24,17 @@ python3 -m http.server
 There is a convenient plugin for VSCode that lets you host the current working directory as a website. Download and install the plugin from the VSCode marketplace:
 [https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer)
 # ECS175_Final_Project
-test push
+
+## Particle Systems
+
+The 'Particles' (or leaves in this case) are managed by a ParticleSystem class, which is responsible for spawning the leaves, and has hardcoded loading for the leaf model and texture values. This was in part due to a formatting issue with the .mtl and .obj files that we were able to get for the leaves, for which the current ObjLoader and MtlLoader were not fully equipped to parse. 
+
+The Grid allows us to know exactly where we are placing the tree models, so these locations are passed into each leaf spawning loop to indicate where to generate leaves. When a new seed is generated, the old asynchornous processes are halted and replaced with new ones (as long as some trees are in the scene). 
+
+The actual leaves are an extension of our shadedObject3D class, but with some extra variables such as velocity and position to keep track of how they are supposed to fall. 
+We constantly update the velocity and position with random increments to simulate a more lifelike falling trajectory. 
+
+The Wind and Gravity sliders scale the lateral and vertical velocities, respectively, allowing them to be 'blown' by the wind, as well as fall faster. The WebGLApp and AppState files are updated accordingly. 
+
+## Procedural Generation
+

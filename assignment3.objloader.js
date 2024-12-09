@@ -366,7 +366,7 @@ class OBJLoader {
             return this.triangulateFace(face)
         } else {
             return this.triangulateFace(face)
-            throw `Unexpected number of entries for face. Expected 3 or 4 but got ${face.length}`
+            //throw `Unexpected number of entries for face. Expected 3 or 4 but got ${face.length}`
         }
     }
 
@@ -388,12 +388,12 @@ class OBJLoader {
         else if (face.length > 4) {
             const triangles = [];
             // Always pick the first vertex in the face and connect it with pairs of the subsequent vertices
-            // This works for any face with more than 3 vertices
+            // Meant for any face with more than 3 vertices (of which we found a lot in the free obj files from online)
             for (let i = 1; i < face.length - 1; i++) {
-                // Create a triangle with the first vertex and two subsequent vertices
+                //create a triangle with the first vertex and two subsequent vertices
                 triangles.push([face[0], face[i], face[i + 1]]);
             }
-            // Flatten the array of triangles (each triangle is a 3-element array)
+            //flatten the array
             return triangles.flat();
         }
         

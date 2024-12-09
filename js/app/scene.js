@@ -57,10 +57,11 @@ class Scene {
         // Trigger the computation of all hierarchical transformations by setting the root's transformation
         this.scenegraph.setTransformation(this.scenegraph.transformation)
 
-        this.centroids = [];
-        this.activeSpawnIntervals = [];
-        this.particleSystem = this.createParticleSystem(gl, shader); //instance particlesystem
-        this.gravity = 0.5;
+        //particle-specific stuff
+        this.centroids = []; //centroids of trees wherever we end up placing them
+        this.activeSpawnIntervals = []; //to keep track of our asynchronous leaf spawning loops
+        this.particleSystem = this.createParticleSystem(gl, shader); //particlesystem
+        this.gravity = 0.5; //default vals
         this.wind = 0.5;
     }
 
@@ -73,11 +74,11 @@ class Scene {
 
         let position = vec3.clone(centroid);
 
-        const randomWindX = (Math.random() - 0.5) * 2;  // Random value between -1 and 1
-        const randomWindZ = (Math.random() - 0.5) * 2;  // Random value between -1 and 1
+        const randomWindX = (Math.random() - 0.5) * 2;  // Random values between -1 and 1
+        const randomWindZ = (Math.random() - 0.5) * 2;
 
-        const windVelocityX = randomWindX * this.wind * 5; // Wind effect on X
-        const windVelocityZ = randomWindZ * this.wind * 5; // Wind effect on Z
+        const windVelocityX = randomWindX * this.wind * 5; // Wind effect on X and Z for lateral movement
+        const windVelocityZ = randomWindZ * this.wind * 5;
         const gravityVelocityY = -20 * this.gravity;
 
         let velocity = vec3.fromValues(windVelocityX, gravityVelocityY, windVelocityZ);
@@ -86,11 +87,8 @@ class Scene {
     }
 
     startLeafSpawning(centroid) {
-        const spawnInterval = 500; // Interval in milliseconds to spawn new leaves (e.g., every 1000ms = 1 second)
-        console.log("starting leaf loop", this.centroids, "centroid", centroid)
-
+        const spawnInterval = 500; // Interval in milliseconds to spawn new leaf
         if (this.centroids.some(existingCentroid => vec3.equals(existingCentroid, centroid))) {
-            console.log("made it in")
             const intervalID = setInterval(() => {
                 this.spawnLeaf(centroid);
             }, spawnInterval);
@@ -98,7 +96,6 @@ class Scene {
         }
     }
     clearActiveSpawnIntervals() {
-        console.log("Clearing active leaf spawn intervals");
         for (let intervalId of this.activeSpawnIntervals) {
             clearInterval(intervalId); // Stop all old leaf spawn intervals
         }
@@ -271,7 +268,7 @@ class Scene {
                 return new DirectionalLight( this.light_counts[this.lights[name].type], color, light.intensity, shader, gl, light_shader )
             
             default:
-                throw `Unsupoorted light type "${light.type}" for light "${light.name}"`
+                throw `Unsupported light type "${light.type}" for light "${light.name}"`
         }
     }
 
@@ -377,10 +374,9 @@ class Scene {
      */
     generateGridObjects(procMap, gl, shader) {
         // delete current grass, rock, and tree objects
-        //console.log("Generating new grid")
         this.centroids = []
         this.clearActiveSpawnIntervals()
-        console.log("Centroids should be clear", this.centroids)
+        
         let platform_node = this.getNode( "platform_node" );
         let platform_children = platform_node.getNodes;
         for (let i = 1; i < platform_children.length; i++) {
